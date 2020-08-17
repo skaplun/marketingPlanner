@@ -1,0 +1,298 @@
+
+<script
+src="https://code.jquery.com/jquery-3.5.1.min.js"
+integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.js"></script>
+
+
+<script src="datepicker.js"></script>
+<script src="oridami.js"></script>
+<link rel="stylesheet" href="datepicker.css"></link>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css"></link>
+
+<style>
+    .datepicker{
+        display: inline-block;
+    }
+    .main-container{
+        width: 500px;
+     left: 36%;
+     top: 20%;
+    }
+    body{
+        background-color:   rgba(0,0,0,.87)
+    }
+
+    .dates-grid{
+        padding-left : 3% !important;
+    }
+    .export-container{
+        right : 10px;
+        position: absolute !important;
+        top: -3px;
+    }
+    .step2header{
+        padding-left: 2%;
+        left:2% !important;
+    }
+
+    .foldedmap{
+        transform: scale(.2) !important;
+        position: absolute !important;
+        left: 1427px !important;
+        top: -245px !important;
+        z-index: 100000000 !important;
+      
+    }
+</style>
+<body>
+<div class="ui center aligned segment basic main-container">
+<div class="ui stacked center aligned segment">
+<h2 class="ui header">Step 1. Select campaign dates</h2>
+
+<div class="ui basic segment marketer-tags">
+<a class="ui tag grey label">Email</a>
+<a class="ui red tag label">SMS</a>
+<a class="ui teal tag label">Banner</a>
+<a class="ui orange tag label">Social</a>
+</div>
+
+<div class="datepicker" data-toggle="datepicker"></div>
+
+<div class="ui segment basic selections"></div>
+
+<div class="ui basic segment">
+    <button class="positive ui button dates-confirm">Let's bingo!</button>
+</div>
+
+</div>
+</div>
+</body>
+
+<script>
+
+    function exportTabeToCSV(table) {
+        var filename =  'marketingPlanner.csv';
+        var $rows = table.getElementsByTagName('tr');
+        console.log($rows)
+        let $a = document.createElement('a');
+
+        // Temporary delimiter characters unlikely to be typed by keyboard.
+        // This is to avoid accidentally splitting the actual contents.
+        var tmpColDelim = String.fromCharCode(11); // Vertical tab character
+        var tmpRowDelim = String.fromCharCode(0); // null character
+        
+        // Actual delimiter characters for CSV format
+        var colDelim = '","';
+        var rowDelim = '"\r\n"';
+
+        // Grab text from table into CSV formatted string
+        var csvData = [];
+
+        for (var i = 0; i < $rows.length; i++) {
+        var $cols = $rows[i].querySelectorAll('td, th');
+        var colData = [];
+
+        for (var j = 0; j < $cols.length; j++) {
+            // Escape double quotes
+            colData.push($cols[j].innerText.replace(/"/g, '""'));
+        }
+
+        csvData.push(colData.join(tmpColDelim));
+        }
+
+        csvData = csvData.join(tmpRowDelim)
+        .split(tmpRowDelim).join(rowDelim)
+        .split(tmpColDelim).join(colDelim);
+        console.log(csvData);
+        if (navigator.msSaveBlob) { // Support IE 10+
+        csvData = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+        navigator.msSaveBlob(csvData, filename);
+        } else {
+        csvData = 'data:application/csv;charset=utf-8, ' + encodeURIComponent('"' + csvData + '"');
+       
+        $a.setAttribute('download', filename);
+        $a.setAttribute('href', csvData);
+        $a.setAttribute('target', '_blank');
+        $a.click();
+        }
+    };
+
+    function populatePage (){
+
+        
+        
+        if(!datesCache.length) return false;
+
+        //$('.main-container').remove();
+        document.querySelector('.main-container').classList.add('foldedmap')
+        document.body.innerHTML += ` <div class="ui segment step2header">
+                <h2 class="ui header ">Step 2. Create campaign</h2>
+                </div>
+                <div class="ui segment basic export-container"><button class="positive ui button export">Export to CSV</button></div>
+        
+        <div class="ui three column grid dates-grid">
+            
+            </div>`
+
+        datesCache.forEach(function (dateObj){
+
+                if(dateObj.type === 'Email'){
+                    document.querySelector('.dates-grid').innerHTML += `
+                <div class="column"> <div class="ui raised segment">
+                            <a class="ui ${dateObj.color} ribbon label">${dateObj.date}</a>
+                            <span contenteditable>${dateObj.type} Deliverable</span>
+                            <div class="ui form" data-type="email">
+                                <div class="field">
+                                    <label>Email Image</label>
+                                    <div class="ui labeled input">
+                                        <div class="ui label">
+                                            https://
+                                        </div>
+                                        <input name="image" type="text" placeholder="Email Image">
+                                        </div>
+                                    </div>
+                                    <div class="field">
+                                        <label>Email Content</label>
+                                    <div class="ui labeled input">
+                                          
+                                        <div class="ui label">
+                                            https://
+                                        </div>
+                                        <input name="template" type="text" placeholder="Email Template">
+                                        </div>
+                                    </div>
+                                <div class="field">
+                                    <label>Email Content</label>
+                                    <textarea name="content" rows="2"></textarea>
+                                </div>
+                                </div>
+
+                            
+                            </div></div>`
+                }
+
+                if(dateObj.type === 'SMS'){
+                    document.querySelector('.dates-grid').innerHTML += `
+                <div class="column"> <div class="ui raised segment">
+                            <a class="ui ${dateObj.color} ribbon label">${dateObj.date}</a>
+                            <span contenteditable>${dateObj.type} Deliverable</span>
+                            <div class="ui form" data-type="sms">
+                                <div class="field">
+                                    <label>SMS Content</label>
+                                    <textarea name="content" rows="2"></textarea>
+                                </div>
+                                </div>
+                                    
+                                    </div></div>`
+                }
+
+                if(dateObj.type === 'Banner'){
+                    document.querySelector('.dates-grid').innerHTML += `
+                <div class="column"> <div class="ui raised segment">
+                            <a class="ui ${dateObj.color} ribbon label">${dateObj.date}</a>
+                            <span contenteditable>${dateObj.type} Deliverable</span>
+                            <div class="ui form" data-type="banner">
+                               
+                                <div class="field">
+                                    <label>Banner URL</label>
+                                    <div class="ui labeled input">
+                                        <div class="ui label">
+                                            https://
+                                        </div>
+                                        <input name="image" type="text" placeholder="Image URL">
+                                        </div>
+                                    </div>
+                                <div class="field">
+                                    <label>Banner CTA</label>
+                                    <textarea name="cta" rows="1"></textarea>
+                                </div>
+                                </div>
+                            </div></div>`
+                }
+
+                if(dateObj.type === 'Social'){
+                    document.querySelector('.dates-grid').innerHTML += `
+                <div class="column"> <div class="ui raised segment">
+                            <a class="ui ${dateObj.color} ribbon label">${dateObj.date}</a>
+                            <span contenteditable>${dateObj.type} Deliverable</span>
+                            <div class="ui form" data-type="social">
+                                <div class="field">
+                                    <label>Social URL</label>
+                                    <div class="ui labeled input">
+                                        <div class="ui label">
+                                            https://
+                                        </div>
+                                        <input type="text" placeholder="Image URL">
+                                        </div>
+                                    </div>
+                                <div class="field">
+                                    <label>Social Content</label>
+                                    <textarea name="content" rows="2"></textarea>
+                                </div>
+                                <div class="field">
+                                    <label>Social CTA</label>
+                                    <textarea name="cta" rows="1"></textarea>
+                                </div>
+                                </div></div></div>`
+                }
+           
+              
+        })
+   
+        document.querySelector('.export').addEventListener('click', function(){
+            console.log(1)
+            let r = Array.from(document.querySelectorAll('.segment .form')).map(function(form){
+                return [form.dataset.type, form.previousElementSibling.textContent /* deliverable*/, 
+                form.previousElementSibling.previousElementSibling.textContent /*date*/, 
+                 ].concat(Object.values($(form).form('get values')))
+            })
+
+           let table = document.createElement('table');
+
+           r.forEach(function(row){
+               let rHTML = document.createElement('tr');
+               table.appendChild(rHTML);
+
+               row.forEach(function(value){
+                let cHTML = document.createElement('td');
+                    cHTML.textContent = value
+                    rHTML.appendChild(cHTML);
+               })
+           })
+
+            exportTabeToCSV(table)
+
+           
+        })
+    }
+
+$('[data-toggle="datepicker"]').datepicker({inline : true , pick : function(e){
+    if(!activeType ) return false; //|| datesCache.includes(e.formattedDate)
+    let colors = {SMS : 'red', Email : 'grey', Banner : 'teal', Social: 'orange' }
+
+    
+    datesCache.push({
+        date : e.formattedDate,
+        type : activeType,
+        color : colors[activeType]
+    })
+
+    document.querySelector('.selections').innerHTML += `<a class="ui ${colors[activeType]} circular label">${e.formattedDate}</a>`
+}});
+
+document.querySelector('.dates-confirm').addEventListener('click', function(){
+    let folded = new OriDomi(document.querySelector('.main-container'), {speed : 1200});
+    folded.accordion(50, 'left', populatePage)
+})
+
+let activeType = undefined;
+let datesCache = []
+
+document.querySelector('.marketer-tags').addEventListener('click', function(e){
+    if(e.target.nodeName !== 'A') return false;
+    activeType = e.target.textContent;
+})
+</script>
